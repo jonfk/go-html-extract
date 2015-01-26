@@ -1,23 +1,49 @@
-package htmlextractor
+package htmlextr
 
 import (
-	"fmt"
+	// "fmt"
+	"bytes"
 	"golang.org/x/net/html"
 	"io/ioutil"
 	"log"
 	"net/http"
 )
 
-func extractString(data string) (string, err) {
-
+func extractString(data string) (string, error) {
+	doc, err := html.Parse(bytes.NewBufferString(data))
+	if err != nil {
+		return "", err
+	}
+	var f func(*html.Node, string)
+	f = func(n *html.Node, outer string) {
+		if n.Type == html.ElementNode && n.Data == "a" {
+			log.Printf("a tag attrs : %#v\n", n.Attr)
+			for c := n.FirstChild; c != nil; c = c.NextSibling {
+				f(c, n.Data)
+			}
+		} else if n.Type == html.ElementNode && n.Data == "p" {
+			log.Printf("p tag attrs : %#v\n", n.Attr)
+			for c := n.FirstChild; c != nil; c = c.NextSibling {
+				f(c, n.Data)
+			}
+		} else {
+			log.Printf("other tag : %s tag attrs : %#v\n", n.Data, n.Attr)
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			f(c, outer)
+		}
+	}
+	f(doc, doc.Data)
+	log.Printf("Processing finished")
+	return "", nil
 }
 
-func extractUrl(url string) (string, err) {
+func extractUrl(url string) (string, error) {
 	resp, err := http.Get(url)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
-	return extractString(body)
+	return extractString(string(body))
 }
