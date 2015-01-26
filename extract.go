@@ -3,10 +3,12 @@ package htmlextr
 import (
 	// "fmt"
 	"bytes"
+	"github.com/davecgh/go-spew/spew"
 	"golang.org/x/net/html"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 )
 
 func extractString(data string) (string, error) {
@@ -35,6 +37,13 @@ func extractString(data string) (string, error) {
 	}
 	f(doc, doc.Data)
 	log.Printf("Processing finished")
+	// testing
+	file, err := os.Create("PageStruct.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+	spew.Fdump(file, doc)
+
 	return "", nil
 }
 
